@@ -7,6 +7,8 @@ DICE_VALUES = range(0, 10)
 # Adjusting Factors
 DICE_NUMBER = 7
 MEAN = 27.68827  # Required for Standard Deviation
+REROLL = False
+NUDGE = False
 
 
 def roll_all_dice():
@@ -15,6 +17,21 @@ def roll_all_dice():
     all_permutations = list(product(DICE_VALUES, repeat=DICE_NUMBER))
     result = [list(perm) for perm in all_permutations]
     return result
+
+
+def reroll_dice(roll):
+    print("Reroll dice does nothing")
+    return evaluate_roll(roll)
+
+
+def nudge_dice(roll):
+    print("Nudge dice does nothing")
+    return evaluate_roll(roll)
+
+
+def reroll_and_nudge_dice(roll):
+    print("Reroll and nudge dice does nothing")
+    return evaluate_roll(roll)
 
 
 def evaluate_roll(roll):
@@ -78,7 +95,15 @@ def calculate_uq(sorted_data):
     return calculate_median(upper_half, data_count)
 
 
-result_list = [evaluate_roll(result) for result in roll_all_dice()]
+all_rolls = roll_all_dice()
+if REROLL and NUDGE:
+    result_list = [reroll_and_nudge_dice(result) for result in all_rolls]
+elif NUDGE:
+    result_list = [nudge_dice(result) for result in all_rolls]
+elif REROLL:
+    result_list = [reroll_dice(result) for result in all_rolls]
+else:
+    result_list = [evaluate_roll(result) for result in all_rolls]
 
 # print(calculate_mean(result_list))
 # print(calculate_sd(result_list, MEAN))
