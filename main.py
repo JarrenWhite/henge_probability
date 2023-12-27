@@ -1,5 +1,4 @@
 from itertools import product
-import statistics
 
 # Static Factors
 ROLL_COUNT = 0
@@ -7,8 +6,7 @@ DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
 DICE_NUMBER = 7
-MEAN = 27.68827
-# Required for Standard Deviation
+MEAN = 27.68827  # Required for Standard Deviation
 
 
 def roll_all_dice():
@@ -48,7 +46,10 @@ def calculate_sd(numbers, mean):
 
 
 def calculate_mode(numbers):
-    return statistics.mode(numbers)
+    from collections import Counter
+    data = Counter(numbers)
+    print(data.most_common())
+    return data.most_common(1)[0][0]
 
 
 def sort_data(numbers):
@@ -79,4 +80,11 @@ def calculate_uq(sorted_data):
 
 result_list = [evaluate_roll(result) for result in roll_all_dice()]
 
-print(calculate_sd(result_list, MEAN))
+# print(calculate_mean(result_list))
+# print(calculate_sd(result_list, MEAN))
+# print(calculate_mode(result_list))
+
+sorted_result_list = sort_data(result_list)
+print(calculate_lq(sorted_result_list))
+print(calculate_median(sorted_result_list, ROLL_COUNT))
+print(calculate_uq(sorted_result_list))
