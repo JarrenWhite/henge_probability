@@ -1,13 +1,14 @@
 from itertools import product
+from collections import Counter
 
 # Static Factors
 ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 7
+DICE_NUMBER = 1
 MEAN = 27.68827  # Required for Standard Deviation
-REROLL = False
+REROLL = True
 NUDGE = False
 
 
@@ -20,8 +21,30 @@ def roll_all_dice():
 
 
 def reroll_dice(roll):
-    print("Reroll dice does nothing")
-    return evaluate_roll(roll)
+    # If only 1 dice, only reroll if under mean
+    if DICE_NUMBER == 1:
+        if roll[0] <= 4:
+            return 14.5
+        else:
+            return evaluate_roll(roll)
+
+    # If more than 1 dice, count values
+    dice_counts = Counter(sort_data(roll, True)).most_common()
+
+    # If all dice are the same, do not re-roll
+    if len(dice_counts) == 1:
+        return evaluate_roll(roll)
+
+    # Re-roll lowest value with lowest count
+    # Get average of all possible re-rolled values
+    best_counts = dice_counts[:-1]
+    minimum_result = evaluate_roll(roll)
+    seen_value_rerolls = [max(pair[0] + ((pair[1]+1) * 10), minimum_result) for pair in best_counts]
+    total_of_seen_values = sum(seen_value_rerolls)
+    no_of_unseen_values = 10 - len(seen_value_rerolls)
+    total_of_unseen_values = no_of_unseen_values * minimum_result
+    result_average = (total_of_seen_values + total_of_unseen_values) / 10
+    return result_average
 
 
 def nudge_dice(roll):
@@ -63,14 +86,13 @@ def calculate_sd(numbers, mean):
 
 
 def calculate_mode(numbers):
-    from collections import Counter
     data = Counter(numbers)
     print(data.most_common())
     return data.most_common(1)[0][0]
 
 
-def sort_data(numbers):
-    return sorted(numbers)
+def sort_data(numbers, reverse=False):
+    return sorted(numbers, reverse=reverse)
 
 
 def calculate_median(sorted_data, data_count):
@@ -105,11 +127,11 @@ elif REROLL:
 else:
     result_list = [evaluate_roll(result) for result in all_rolls]
 
-# print(calculate_mean(result_list))
+print(calculate_mean(result_list))
 # print(calculate_sd(result_list, MEAN))
 # print(calculate_mode(result_list))
 
-sorted_result_list = sort_data(result_list)
-print(calculate_lq(sorted_result_list))
-print(calculate_median(sorted_result_list, ROLL_COUNT))
-print(calculate_uq(sorted_result_list))
+# sorted_result_list = sort_data(result_list)
+# print(calculate_lq(sorted_result_list))
+# print(calculate_median(sorted_result_list, ROLL_COUNT))
+# print(calculate_uq(sorted_result_list))
