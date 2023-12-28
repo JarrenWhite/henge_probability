@@ -6,8 +6,8 @@ ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 1
-MEAN = 27.68827  # Required for Standard Deviation
+DICE_NUMBER = 7
+MEAN = 15.75  # Required for Standard Deviation
 REROLL = True
 NUDGE = False
 
@@ -24,27 +24,27 @@ def reroll_dice(roll):
     # If only 1 dice, only reroll if under mean
     if DICE_NUMBER == 1:
         if roll[0] <= 4:
-            return 14.5
+            return [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
         else:
-            return evaluate_roll(roll)
+            value = evaluate_roll(roll)
+            return [value, value, value, value, value, value, value, value, value, value]
 
     # If more than 1 dice, count values
     dice_counts = Counter(sort_data(roll, True)).most_common()
 
     # If all dice are the same, do not re-roll
     if len(dice_counts) == 1:
-        return evaluate_roll(roll)
+        value = evaluate_roll(roll)
+        return [value, value, value, value, value, value, value, value, value, value]
 
     # Re-roll lowest value with lowest count
     # Get average of all possible re-rolled values
     best_counts = dice_counts[:-1]
     minimum_result = evaluate_roll(roll)
-    seen_value_rerolls = [max(pair[0] + ((pair[1]+1) * 10), minimum_result) for pair in best_counts]
-    total_of_seen_values = sum(seen_value_rerolls)
-    no_of_unseen_values = 10 - len(seen_value_rerolls)
-    total_of_unseen_values = no_of_unseen_values * minimum_result
-    result_average = (total_of_seen_values + total_of_unseen_values) / 10
-    return result_average
+    new_rolls = [max(pair[0] + ((pair[1]+1) * 10), minimum_result) for pair in best_counts]
+    while len(new_rolls) < 10:
+        new_rolls.append(minimum_result)
+    return new_rolls
 
 
 def nudge_dice(roll):
@@ -54,7 +54,7 @@ def nudge_dice(roll):
 
 def reroll_and_nudge_dice(roll):
     print("Reroll and nudge dice does nothing")
-    return evaluate_roll(roll)
+    return [evaluate_roll(roll)]
 
 
 def evaluate_roll(roll):
@@ -120,19 +120,25 @@ def calculate_uq(sorted_data):
 if __name__ == "__main__":
     all_rolls = roll_all_dice()
     if REROLL and NUDGE:
-        result_list = [reroll_and_nudge_dice(result) for result in all_rolls]
+        ROLL_COUNT *= 10
+        result_list = []
+        for result in all_rolls:
+            result_list.extend(reroll_and_nudge_dice(result))
     elif NUDGE:
         result_list = [nudge_dice(result) for result in all_rolls]
     elif REROLL:
-        result_list = [reroll_dice(result) for result in all_rolls]
+        ROLL_COUNT *= 10
+        result_list = []
+        for result in all_rolls:
+            result_list.extend(reroll_dice(result))
     else:
         result_list = [evaluate_roll(result) for result in all_rolls]
 
-    print(calculate_mean(result_list))
+    # print(calculate_mean(result_list))
     # print(calculate_sd(result_list, MEAN))
-    # print(calculate_mode(result_list))
+    print(calculate_mode(result_list))
 
-    # sorted_result_list = sort_data(result_list)
-    # print(calculate_lq(sorted_result_list))
-    # print(calculate_median(sorted_result_list, ROLL_COUNT))
-    # print(calculate_uq(sorted_result_list))
+    sorted_result_list = sort_data(result_list)
+    print(calculate_lq(sorted_result_list))
+    print(calculate_median(sorted_result_list, ROLL_COUNT))
+    print(calculate_uq(sorted_result_list))
