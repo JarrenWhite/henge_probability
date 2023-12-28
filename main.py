@@ -117,21 +117,22 @@ def calculate_uq(sorted_data):
     return calculate_median(upper_half, data_count)
 
 
-all_rolls = roll_all_dice()
-if REROLL and NUDGE:
-    result_list = [reroll_and_nudge_dice(result) for result in all_rolls]
-elif NUDGE:
-    result_list = [nudge_dice(result) for result in all_rolls]
-elif REROLL:
-    result_list = [reroll_dice(result) for result in all_rolls]
-else:
-    result_list = [evaluate_roll(result) for result in all_rolls]
+if __name__ == "__main__":
+    all_rolls = roll_all_dice()
+    if REROLL and NUDGE:
+        result_list = [reroll_and_nudge_dice(result) for result in all_rolls]
+    elif NUDGE:
+        result_list = [nudge_dice(result) for result in all_rolls]
+    elif REROLL:
+        result_list = [reroll_dice(result) for result in all_rolls]
+    else:
+        result_list = [evaluate_roll(result) for result in all_rolls]
 
-print(calculate_mean(result_list))
-# print(calculate_sd(result_list, MEAN))
-# print(calculate_mode(result_list))
+    print(calculate_mean(result_list))
+    # print(calculate_sd(result_list, MEAN))
+    # print(calculate_mode(result_list))
 
-# sorted_result_list = sort_data(result_list)
-# print(calculate_lq(sorted_result_list))
-# print(calculate_median(sorted_result_list, ROLL_COUNT))
-# print(calculate_uq(sorted_result_list))
+    # sorted_result_list = sort_data(result_list)
+    # print(calculate_lq(sorted_result_list))
+    # print(calculate_median(sorted_result_list, ROLL_COUNT))
+    # print(calculate_uq(sorted_result_list))
