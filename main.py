@@ -7,9 +7,15 @@ ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 1
+DICE_NUMBER = 5
 REROLL = True
 NUDGE = True
+
+# Broken Rolls
+# [0, 0, 2, 3, 3, 4]
+# [0, 0, 2, 3, 3]
+# [0, 0, 2, 3, 3, 5]
+test_roll = [0, 0, 2, 3, 3]
 
 
 def roll_all_dice():
@@ -90,8 +96,87 @@ def nudge_dice(roll):
 
 
 def reroll_and_nudge_dice(roll):
-    print("Reroll and nudge dice does nothing")
-    return [evaluate_roll(roll)]
+    # If only 1 dice, only reroll if under mean
+    if DICE_NUMBER == 1:
+        if roll[0] <= 4:
+            return [19, 12, 13, 14, 15, 16, 17, 18, 19, 19]
+        else:
+            if roll[0] == 0:
+                return [19, 19, 19, 19, 19, 19, 19, 19, 19, 19]
+            else:
+                value = min(19, roll[0] + 11)
+                return [value, value, value, value, value, value, value, value, value, value]
+
+    # If more than 1 dice, count values
+    base_roll = []
+    dice_counts = Counter(sort_data(roll, reverse=True))
+
+    # If all dice are the same, do not re-roll or nudge
+    if len(dice_counts) == 1:
+        value = evaluate_roll(roll)
+        return [value, value, value, value, value, value, value, value, value, value]
+
+    # Find all dice which are not in groups, and all dice that are not nudge candidates
+    more_than_once = [num for num, count in dice_counts.items() if count > 1]
+    nudge_requirements = set()
+    for value in roll:
+        nudge_requirements.add(nudge_up(value))
+        nudge_requirements.add(nudge_down(value))
+
+    # Find dice which is not grouped, and not a nudge candidate, re-roll lowest (non-zero) dice
+    unique_dice = [num for num, count in dice_counts.items() if (count == 1)]
+    reroll_candidates = [num for num in unique_dice if (num not in nudge_requirements) and (num not in more_than_once)]
+    if len(reroll_candidates) > 0:
+        sorted_list = sort_data(reroll_candidates, reverse=True)
+        if sorted_list[-1] == 0:
+            dice_to_reroll = sorted_list[-2]
+        else:
+            dice_to_reroll = sorted_list[-1]
+        base_roll = [item for item in roll if item != dice_to_reroll]
+
+    # If all grouped, determine smallest value group, re-roll one of its dice
+    if base_roll == [] and len(unique_dice) == 0:
+        grouped_dice = dice_counts.most_common()
+        lowest_value_group = grouped_dice[-1][0]
+
+        for num, count in grouped_dice:
+            if num == lowest_value_group:
+                for _ in range(count - 1):
+                    base_roll.append(num)
+            else:
+                for _ in range(count):
+                    base_roll.append(num)
+
+    # If all nudge candidates, reroll smallest non-zero value
+    # (Unless only two dice, then the nudge will correct)
+    if base_roll == [] and all(value in nudge_requirements for value in roll):
+        # If only two dice, allow the nudge to correct
+        if DICE_NUMBER == 2:
+            value = nudge_dice(roll)
+            return [value for _ in range(10)]
+
+        # Otherwise, re-roll the smallest non-zero value
+        sorted_list = sort_data(roll)
+        if sorted_list[-1] == 0:
+            dice_to_reroll = sorted_list[-2]
+        else:
+            dice_to_reroll = sorted_list[-1]
+        base_roll = [item for item in roll if item != dice_to_reroll]
+
+    # All in group OR nudgeable
+    # One group, one outlier - no re-roll, then nudge
+    # One group, several outliers - reroll any outlier, then nudge
+    # Multiple groups, one outlier - if outlier can make strongest group: reroll from other group, then nudge
+    #                              - else reroll it, then nudge
+    # Multiple groups, multiple outliers - if an outlier can make strongest group, reroll another outlier, then nudge
+    #                                    - else reroll any outlier, then nudge
+
+    # Roll a dice & add to all bases
+    new_rolls = [base_roll.copy() for _ in range(10)]
+    for reroll in DICE_VALUES:
+        new_rolls[reroll].append(reroll)
+    # Nudge all versions of re-rolled dice
+    return [nudge_dice(new_roll) for new_roll in new_rolls]
 
 
 def evaluate_roll(roll):
@@ -153,32 +238,35 @@ def calculate_uq(sorted_data):
     return calculate_median(upper_half, data_count)
 
 
-if __name__ == "__main__":
-    all_rolls = roll_all_dice()
-    if REROLL and NUDGE:
-        ROLL_COUNT *= 10
-        result_list = []
-        for result in tqdm(all_rolls):
-            result_list.extend(reroll_and_nudge_dice(result))
-    elif NUDGE:
-        result_list = [nudge_dice(result) for result in tqdm(all_rolls)]
-    elif REROLL:
-        ROLL_COUNT *= 10
-        result_list = []
-        for result in tqdm(all_rolls):
-            result_list.extend(reroll_dice(result))
-    else:
-        result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
+print(reroll_and_nudge_dice(test_roll))
 
-    mean = calculate_mean(result_list)
-    print("Mean:")
-    print(mean)
-    print("Standard Deviation:")
-    print(calculate_sd(result_list, mean))
-    print("Mode")
-    print(calculate_mode(result_list))
-    sorted_result_list = sort_data(result_list)
-    print("Iq Range")
-    print(calculate_lq(sorted_result_list))
-    print(calculate_median(sorted_result_list, ROLL_COUNT))
-    print(calculate_uq(sorted_result_list))
+
+# if __name__ == "__main__":
+#     all_rolls = roll_all_dice()
+#     if REROLL and NUDGE:
+#         ROLL_COUNT *= 10
+#         result_list = []
+#         for result in tqdm(all_rolls):
+#             result_list.extend(reroll_and_nudge_dice(result))
+#     elif NUDGE:
+#         result_list = [nudge_dice(result) for result in tqdm(all_rolls)]
+#     elif REROLL:
+#         ROLL_COUNT *= 10
+#         result_list = []
+#         for result in tqdm(all_rolls):
+#             result_list.extend(reroll_dice(result))
+#     else:
+#         result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
+
+    # mean = calculate_mean(result_list)
+    # print("Mean:")
+    # print(mean)
+    # print("Standard Deviation:")
+    # print(calculate_sd(result_list, mean))
+    # print("Mode")
+    # print(calculate_mode(result_list))
+    # sorted_result_list = sort_data(result_list)
+    # print("Iq Range")
+    # print(calculate_lq(sorted_result_list))
+    # print(calculate_median(sorted_result_list, ROLL_COUNT))
+    # print(calculate_uq(sorted_result_list))
