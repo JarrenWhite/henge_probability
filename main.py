@@ -7,9 +7,8 @@ ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 7
-MEAN = 16.2  # Required for Standard Deviation
-REROLL = False
+DICE_NUMBER = 1
+REROLL = True
 NUDGE = True
 
 
@@ -117,15 +116,14 @@ def calculate_mean(numbers):
     return total / len(numbers)
 
 
-def calculate_sd(numbers, mean):
-    squared_diff = sum((x - mean) ** 2 for x in numbers)
+def calculate_sd(numbers, mean_in):
+    squared_diff = sum((x - mean_in) ** 2 for x in numbers)
     variance = squared_diff / ROLL_COUNT
     return variance ** 0.5
 
 
 def calculate_mode(numbers):
     data = Counter(numbers)
-    print(data.most_common())
     return data.most_common(1)[0][0]
 
 
@@ -172,11 +170,15 @@ if __name__ == "__main__":
     else:
         result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
 
-    # print(calculate_mean(result_list))
-    # print(calculate_sd(result_list, MEAN))
+    mean = calculate_mean(result_list)
+    print("Mean:")
+    print(mean)
+    print("Standard Deviation:")
+    print(calculate_sd(result_list, mean))
+    print("Mode")
     print(calculate_mode(result_list))
-
     sorted_result_list = sort_data(result_list)
+    print("Iq Range")
     print(calculate_lq(sorted_result_list))
     print(calculate_median(sorted_result_list, ROLL_COUNT))
     print(calculate_uq(sorted_result_list))
