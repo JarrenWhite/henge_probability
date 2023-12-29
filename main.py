@@ -1,5 +1,6 @@
 from itertools import product
 from collections import Counter
+from tqdm import tqdm
 
 # Static Factors
 ROLL_COUNT = 0
@@ -7,17 +8,16 @@ DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
 DICE_NUMBER = 7
-MEAN = 15.75  # Required for Standard Deviation
-REROLL = True
-NUDGE = False
+MEAN = 16.2  # Required for Standard Deviation
+REROLL = False
+NUDGE = True
 
 
 def roll_all_dice():
     global ROLL_COUNT
     ROLL_COUNT = len(DICE_VALUES) ** DICE_NUMBER
     all_permutations = list(product(DICE_VALUES, repeat=DICE_NUMBER))
-    result = [list(perm) for perm in all_permutations]
-    return result
+    return [list(perm) for perm in all_permutations]
 
 
 def reroll_dice(roll):
@@ -47,9 +47,47 @@ def reroll_dice(roll):
     return new_rolls
 
 
+def nudge_up(number):
+    if number == 9:
+        return 0
+    else:
+        return number + 1
+
+
+def nudge_down(number):
+    if number == 0:
+        return 9
+    else:
+        return number - 1
+
+
 def nudge_dice(roll):
-    print("Nudge dice does nothing")
-    return evaluate_roll(roll)
+    # If only 1 dice, nudge to best value
+    if DICE_NUMBER == 1:
+        if roll[0] == 0:
+            return 19
+        else:
+            return min(19, roll[0] + 11)
+
+    # If more than 1 dice, try nudging every value up & down
+    all_roll_variants = [[] for _ in range(DICE_NUMBER * 2)]
+    i = 0
+    for value in roll:
+        for j in range(len(all_roll_variants)):
+            if j != i and j != i + DICE_NUMBER:
+                all_roll_variants[j].append(value)
+
+        all_roll_variants[i].append(nudge_up(value))
+        all_roll_variants[i + DICE_NUMBER].append(nudge_down(value))
+        i += 1
+
+    # Evaluate all results and return best one
+    best_result = 0
+    for attempt in all_roll_variants:
+        total_value = evaluate_roll(attempt)
+        if total_value > best_result:
+            best_result = total_value
+    return best_result
 
 
 def reroll_and_nudge_dice(roll):
@@ -122,17 +160,17 @@ if __name__ == "__main__":
     if REROLL and NUDGE:
         ROLL_COUNT *= 10
         result_list = []
-        for result in all_rolls:
+        for result in tqdm(all_rolls):
             result_list.extend(reroll_and_nudge_dice(result))
     elif NUDGE:
-        result_list = [nudge_dice(result) for result in all_rolls]
+        result_list = [nudge_dice(result) for result in tqdm(all_rolls)]
     elif REROLL:
         ROLL_COUNT *= 10
         result_list = []
-        for result in all_rolls:
+        for result in tqdm(all_rolls):
             result_list.extend(reroll_dice(result))
     else:
-        result_list = [evaluate_roll(result) for result in all_rolls]
+        result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
 
     # print(calculate_mean(result_list))
     # print(calculate_sd(result_list, MEAN))
