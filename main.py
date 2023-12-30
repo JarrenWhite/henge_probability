@@ -95,6 +95,24 @@ def nudge_dice(roll):
     return best_result
 
 
+def brute_force_nudge_and_reroll(roll):
+    all_base_rolls = [roll[:i] + roll[i+1:] for i in range(len(roll))]
+
+    # Case if "as is" is best strategy
+    best_total_so_far = nudge_dice(roll) * 10
+    best_rolls = [nudge_dice(roll) for _ in range(10)]
+
+    for base_roll in all_base_rolls:
+        re_rolled = [nudge_dice(base_roll.copy() + [i]) for i in range(10)]
+        new_total = sum(re_rolled)
+        if new_total > best_total_so_far:
+            print(base_roll)
+            best_total_so_far = new_total
+            best_rolls = re_rolled
+
+    return best_rolls
+
+
 def reroll_and_nudge_dice(roll):
     # If only 1 dice, only reroll if under mean
     if DICE_NUMBER == 1:
@@ -238,8 +256,7 @@ def calculate_uq(sorted_data):
     return calculate_median(upper_half, data_count)
 
 
-print(reroll_and_nudge_dice(test_roll))
-
+print(brute_force_nudge_and_reroll([1, 2, 2, 3, 5]))
 
 # if __name__ == "__main__":
 #     all_rolls = roll_all_dice()
