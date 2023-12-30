@@ -7,15 +7,9 @@ ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 5
+DICE_NUMBER = 6
 REROLL = True
 NUDGE = True
-
-# Broken Rolls
-# [0, 0, 2, 3, 3, 4]
-# [0, 0, 2, 3, 3]
-# [0, 0, 2, 3, 3, 5]
-test_roll = [0, 0, 2, 3, 3]
 
 
 def roll_all_dice():
@@ -181,13 +175,9 @@ def reroll_and_nudge_dice(roll):
             dice_to_reroll = sorted_list[-1]
         base_roll = [item for item in roll if item != dice_to_reroll]
 
-    # All in group OR nudgeable
-    # One group, one outlier - no re-roll, then nudge
-    # One group, several outliers - reroll any outlier, then nudge
-    # Multiple groups, one outlier - if outlier can make strongest group: reroll from other group, then nudge
-    #                              - else reroll it, then nudge
-    # Multiple groups, multiple outliers - if an outlier can make strongest group, reroll another outlier, then nudge
-    #                                    - else reroll any outlier, then nudge
+    # If still no base, resort to brute force
+    if not base_roll:
+        return brute_force_nudge_and_reroll(roll)
 
     # Roll a dice & add to all bases
     new_rolls = [base_roll.copy() for _ in range(10)]
@@ -256,34 +246,32 @@ def calculate_uq(sorted_data):
     return calculate_median(upper_half, data_count)
 
 
-print(brute_force_nudge_and_reroll([1, 2, 2, 3, 5]))
+if __name__ == "__main__":
+    all_rolls = roll_all_dice()
+    if REROLL and NUDGE:
+        ROLL_COUNT *= 10
+        result_list = []
+        for result in tqdm(all_rolls):
+            result_list.extend(reroll_and_nudge_dice(result))
+    elif NUDGE:
+        result_list = [nudge_dice(result) for result in tqdm(all_rolls)]
+    elif REROLL:
+        ROLL_COUNT *= 10
+        result_list = []
+        for result in tqdm(all_rolls):
+            result_list.extend(reroll_dice(result))
+    else:
+        result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
 
-# if __name__ == "__main__":
-#     all_rolls = roll_all_dice()
-#     if REROLL and NUDGE:
-#         ROLL_COUNT *= 10
-#         result_list = []
-#         for result in tqdm(all_rolls):
-#             result_list.extend(reroll_and_nudge_dice(result))
-#     elif NUDGE:
-#         result_list = [nudge_dice(result) for result in tqdm(all_rolls)]
-#     elif REROLL:
-#         ROLL_COUNT *= 10
-#         result_list = []
-#         for result in tqdm(all_rolls):
-#             result_list.extend(reroll_dice(result))
-#     else:
-#         result_list = [evaluate_roll(result) for result in tqdm(all_rolls)]
-
-    # mean = calculate_mean(result_list)
-    # print("Mean:")
-    # print(mean)
-    # print("Standard Deviation:")
-    # print(calculate_sd(result_list, mean))
-    # print("Mode")
-    # print(calculate_mode(result_list))
-    # sorted_result_list = sort_data(result_list)
-    # print("Iq Range")
-    # print(calculate_lq(sorted_result_list))
-    # print(calculate_median(sorted_result_list, ROLL_COUNT))
-    # print(calculate_uq(sorted_result_list))
+    mean = calculate_mean(result_list)
+    print("Mean:")
+    print(mean)
+    print("Standard Deviation:")
+    print(calculate_sd(result_list, mean))
+    print("Mode")
+    print(calculate_mode(result_list))
+    sorted_result_list = sort_data(result_list)
+    print("Iq Range")
+    print(calculate_lq(sorted_result_list))
+    print(calculate_median(sorted_result_list, ROLL_COUNT))
+    print(calculate_uq(sorted_result_list))
