@@ -7,7 +7,7 @@ ROLL_COUNT = 0
 DICE_VALUES = range(0, 10)
 
 # Adjusting Factors
-DICE_NUMBER = 1
+DICE_NUMBER = 7
 REROLL = True
 NUDGE = True
 
@@ -109,8 +109,8 @@ def brute_force_nudge_and_reroll(roll):
 def evaluate_roll(roll):
     counts = [0] * 10
 
-    for result in roll:
-        counts[result] += 1
+    for value in roll:
+        counts[value] += 1
 
     max_count = 0
     max_value = 0
